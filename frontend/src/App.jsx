@@ -3,8 +3,8 @@ import "./App.css";
 import { Routes, Route } from "react-router-dom";
 import Navbar from "../src/components/Navbar";
 import Home from "../src/pages/Home";
-import Home from "../src/pages/Login";
-import Home from "../src/pages/Register";
+import Login from "../src/pages/Login";
+import Register from "../src/pages/Register";
 
 function App() {
   return (
@@ -12,8 +12,8 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/" element={<Login />} />
-        <Route path="/" element={<Register />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
       </Routes>
     </>
   );
