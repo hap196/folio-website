@@ -7,7 +7,7 @@ const test = (req, res) => {
   res.json("test endpoints are working");
 };
 
-// register endpoint
+// register user endpoint
 const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
