@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 
-const { courseSchema, Course } = require("./course"); // Make sure this points to the correct file path
+const courseSchema = require("./course");
 const extracurricularSchema = require("./extracurricular");
 const awardSchema = require("./award");
 const testScoreSchema = require("./testScore");

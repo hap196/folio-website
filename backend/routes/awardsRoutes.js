@@ -1,33 +1,31 @@
 const express = require("express");
-const Award = require("../models/award.js");
+const User = require("../models/user.js");
 
 const router = express.Router();
 
 // create/save a new award
-router.post("/", async (request, response) => {
+router.post("/:userId/awards", async (request, response) => {
   try {
-    if (
-      !request.body.title ||
-      !request.body.description ||
-      !request.body.issuer ||
-      !request.body.dateReceived
-    ) {
+    const { userId } = request.params;
+    const { title, description, issuer, dateReceived } = request.body;
+
+    if (!title || !description || !issuer || !dateReceived) {
       return response.status(400).send({
         message:
           "Please provide all required fields: title, description, issuer, dateReceived",
       });
     }
 
-    const newAward = new Award({
-      title: request.body.title,
-      description: request.body.description,
-      issuer: request.body.issuer,
-      dateReceived: request.body.dateReceived,
-    });
+    const user = await User.findById(userId);
+    if (!user) {
+      return response.status(404).send({ message: "User not found" });
+    }
 
-    const savedAward = await newAward.save();
+    const newAward = { title, description, issuer, dateReceived };
+    user.awards.push(newAward);
+    await user.save();
 
-    return response.status(201).json(savedAward);
+    return response.status(201).json(newAward);
   } catch (error) {
     console.log(error.message);
     response.status(500).send({ message: error.message });
@@ -35,12 +33,18 @@ router.post("/", async (request, response) => {
 });
 
 // get all awards
-router.get("/", async (request, response) => {
+router.get("/:userId/awards", async (request, response) => {
   try {
-    const awards = await Award.find({});
+    const { userId } = request.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return response.status(404).send({ message: "User not found" });
+    }
+
     return response.status(200).json({
-      count: awards.length,
-      data: awards,
+      count: user.awards.length,
+      data: user.awards,
     });
   } catch (error) {
     console.log(error.message);
@@ -49,11 +53,16 @@ router.get("/", async (request, response) => {
 });
 
 // get one award by id
-router.get("/:id", async (request, response) => {
+router.get("/:userId/awards/:awardId", async (request, response) => {
   try {
-    const { id } = request.params;
-    const award = await Award.findById(id);
+    const { userId, awardId } = request.params;
 
+    const user = await User.findById(userId);
+    if (!user) {
+      return response.status(404).send({ message: "User not found" });
+    }
+
+    const award = user.awards.id(awardId);
     if (!award) {
       return response.status(404).send({ message: "Award not found" });
     }
@@ -66,20 +75,27 @@ router.get("/:id", async (request, response) => {
 });
 
 // update an award
-router.put("/:id", async (request, response) => {
+router.put("/:userId/awards/:awardId", async (request, response) => {
   try {
-    const { id } = request.params;
-    const updateData = request.body;
+    const { userId, awardId } = request.params;
 
-    const updatedAward = await Award.findByIdAndUpdate(id, updateData, {
-      new: true,
-    });
+    const user = await User.findById(userId);
+    if (!user) {
+      return response.status(404).send({ message: "User not found" });
+    }
 
-    if (!updatedAward) {
+    const award = user.awards.id(awardId);
+    if (!award) {
       return response.status(404).send({ message: "Award not found" });
     }
 
-    return response.status(200).json(updatedAward);
+    award.title = request.body.title || award.title;
+    award.description = request.body.description || award.description;
+    award.issuer = request.body.issuer || award.issuer;
+    award.dateReceived = request.body.dateReceived || award.dateReceived;
+
+    await user.save();
+    return response.status(200).json(award);
   } catch (error) {
     console.log(error.message);
     response.status(500).send({ message: error.message });
@@ -87,14 +103,22 @@ router.put("/:id", async (request, response) => {
 });
 
 // delete an award
-router.delete("/:id", async (request, response) => {
+router.delete("/:userId/awards/:awardId", async (request, response) => {
   try {
-    const { id } = request.params;
-    const deletedAward = await Award.findByIdAndDelete(id);
+    const { userId, awardId } = request.params;
 
-    if (!deletedAward) {
+    const user = await User.findById(userId);
+    if (!user) {
+      return response.status(404).send({ message: "User not found" });
+    }
+
+    const awardIndex = user.awards.findIndex((award) => award.id === awardId);
+    if (awardIndex === -1) {
       return response.status(404).send({ message: "Award not found" });
     }
+
+    user.awards.splice(awardIndex, 1);
+    await user.save();
 
     return response.status(200).send({ message: "Award deleted successfully" });
   } catch (error) {

@@ -9,7 +9,4 @@ const courseSchema = new Schema({
 });
 
 const Course = mongoose.model("Course", courseSchema);
-module.exports = {
-  courseSchema,
-  Course,
-};
+module.exports = courseSchema;

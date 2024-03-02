@@ -1,18 +1,22 @@
 const express = require("express");
-const Extracurricular = require("../models/extracurricular.js");
+const User = require("../models/user.js"); 
 
 const router = express.Router();
 
 // create/save a new extracurricular
-router.post("/", async (request, response) => {
+router.post("/:userId/extracurriculars", async (request, response) => {
   try {
+    const { userId } = request.params;
+    const { name, position, description, location, startYear, endYear } =
+      request.body;
+
     if (
-      !request.body.name ||
-      !request.body.position ||
-      !request.body.description ||
-      !request.body.location ||
-      !request.body.startYear ||
-      !request.body.endYear
+      !name ||
+      !position ||
+      !description ||
+      !location ||
+      !startYear ||
+      !endYear
     ) {
       return response.status(400).send({
         message:
@@ -20,18 +24,23 @@ router.post("/", async (request, response) => {
       });
     }
 
-    const newExtracurricular = new Extracurricular({
-      name: request.body.name,
-      position: request.body.position,
-      description: request.body.description,
-      location: request.body.location,
-      startYear: request.body.startYear,
-      endYear: request.body.endYear,
-    });
+    const user = await User.findById(userId);
+    if (!user) {
+      return response.status(404).send({ message: "User not found" });
+    }
 
-    const savedExtracurricular = await newExtracurricular.save();
+    const newExtracurricular = {
+      name,
+      position,
+      description,
+      location,
+      startYear,
+      endYear,
+    };
+    user.extracurriculars.push(newExtracurricular);
+    await user.save();
 
-    return response.status(201).json(savedExtracurricular);
+    return response.status(201).json(newExtracurricular);
   } catch (error) {
     console.log(error.message);
     response.status(500).send({ message: error.message });
@@ -39,12 +48,18 @@ router.post("/", async (request, response) => {
 });
 
 // get all extracurriculars
-router.get("/", async (request, response) => {
+router.get("/:userId/extracurriculars", async (request, response) => {
   try {
-    const extracurriculars = await Extracurricular.find({});
+    const { userId } = request.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return response.status(404).send({ message: "User not found" });
+    }
+
     return response.status(200).json({
-      count: extracurriculars.length,
-      data: extracurriculars,
+      count: user.extracurriculars.length,
+      data: user.extracurriculars,
     });
   } catch (error) {
     console.log(error.message);
@@ -53,68 +68,103 @@ router.get("/", async (request, response) => {
 });
 
 // get one extracurricular by id
-router.get("/:id", async (request, response) => {
-  try {
-    const { id } = request.params;
-    const extracurricular = await Extracurricular.findById(id);
+router.get(
+  "/:userId/extracurriculars/:extracurricularId",
+  async (request, response) => {
+    try {
+      const { userId, extracurricularId } = request.params;
 
-    if (!extracurricular) {
-      return response
-        .status(404)
-        .send({ message: "Extracurricular not found" });
+      const user = await User.findById(userId);
+      if (!user) {
+        return response.status(404).send({ message: "User not found" });
+      }
+
+      const extracurricular = user.extracurriculars.id(extracurricularId);
+      if (!extracurricular) {
+        return response
+          .status(404)
+          .send({ message: "Extracurricular not found" });
+      }
+
+      return response.status(200).json(extracurricular);
+    } catch (error) {
+      console.log(error.message);
+      response.status(500).send({ message: error.message });
     }
-
-    return response.status(200).json(extracurricular);
-  } catch (error) {
-    console.log(error.message);
-    response.status(500).send({ message: error.message });
   }
-});
+);
 
 // update an extracurricular
-router.put("/:id", async (request, response) => {
-  try {
-    const { id } = request.params;
-    const updateData = request.body;
+router.put(
+  "/:userId/extracurriculars/:extracurricularId",
+  async (request, response) => {
+    try {
+      const { userId, extracurricularId } = request.params;
 
-    const updatedExtracurricular = await Extracurricular.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true }
-    );
+      const user = await User.findById(userId);
+      if (!user) {
+        return response.status(404).send({ message: "User not found" });
+      }
 
-    if (!updatedExtracurricular) {
-      return response
-        .status(404)
-        .send({ message: "Extracurricular not found" });
+      const extracurricular = user.extracurriculars.id(extracurricularId);
+      if (!extracurricular) {
+        return response
+          .status(404)
+          .send({ message: "Extracurricular not found" });
+      }
+
+      extracurricular.name = request.body.name || extracurricular.name;
+      extracurricular.position =
+        request.body.position || extracurricular.position;
+      extracurricular.description =
+        request.body.description || extracurricular.description;
+      extracurricular.location =
+        request.body.location || extracurricular.location;
+      extracurricular.startYear =
+        request.body.startYear || extracurricular.startYear;
+      extracurricular.endYear = request.body.endYear || extracurricular.endYear;
+
+      await user.save();
+      return response.status(200).json(extracurricular);
+    } catch (error) {
+      console.log(error.message);
+      response.status(500).send({ message: error.message });
     }
-
-    return response.status(200).json(updatedExtracurricular);
-  } catch (error) {
-    console.log(error.message);
-    response.status(500).send({ message: error.message });
   }
-});
+);
 
 // delete an extracurricular
-router.delete("/:id", async (request, response) => {
-  try {
-    const { id } = request.params;
-    const deletedExtracurricular = await Extracurricular.findByIdAndDelete(id);
+router.delete(
+  "/:userId/extracurriculars/:extracurricularId",
+  async (request, response) => {
+    try {
+      const { userId, extracurricularId } = request.params;
 
-    if (!deletedExtracurricular) {
+      const user = await User.findById(userId);
+      if (!user) {
+        return response.status(404).send({ message: "User not found" });
+      }
+
+      const extracurricularIndex = user.extracurriculars.findIndex(
+        (extracurricular) => extracurricular.id === extracurricularId
+      );
+      if (extracurricularIndex === -1) {
+        return response
+          .status(404)
+          .send({ message: "Extracurricular not found" });
+      }
+
+      user.extracurriculars.splice(extracurricularIndex, 1);
+      await user.save();
+
       return response
-        .status(404)
-        .send({ message: "Extracurricular not found" });
+        .status(200)
+        .send({ message: "Extracurricular deleted successfully" });
+    } catch (error) {
+      console.log(error.message);
+      response.status(500).send({ message: error.message });
     }
-
-    return response
-      .status(200)
-      .send({ message: "Extracurricular deleted successfully" });
-  } catch (error) {
-    console.log(error.message);
-    response.status(500).send({ message: error.message });
   }
-});
+);
 
 module.exports = router;

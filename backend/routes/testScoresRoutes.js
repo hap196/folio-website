@@ -1,11 +1,12 @@
 const express = require("express");
-const TestScore = require("../models/testScore.js");
+const User = require("../models/user.js");
 
 const router = express.Router();
 
 //  create/save a new test score
-router.post("/", async (request, response) => {
+router.post("/:userId/testScores", async (request, response) => {
   try {
+    const { userId } = request.params;
     if (
       !request.body.testName ||
       !request.body.score ||
@@ -18,16 +19,21 @@ router.post("/", async (request, response) => {
       });
     }
 
-    const newTestScore = new TestScore({
+    const user = await User.findById(userId);
+    if (!user) {
+      return response.status(404).send({ message: "User not found" });
+    }
+
+    const newTestScore = {
       testName: request.body.testName,
       score: request.body.score,
       percentile: request.body.percentile,
       dateTaken: request.body.dateTaken,
-    });
+    };
+    user.testScores.push(newTestScore);
+    await user.save();
 
-    const savedTestScore = await newTestScore.save();
-
-    return response.status(201).json(savedTestScore);
+    return response.status(201).json(newTestScore);
   } catch (error) {
     console.log(error.message);
     response.status(500).send({ message: error.message });
@@ -35,12 +41,18 @@ router.post("/", async (request, response) => {
 });
 
 // get all test scores
-router.get("/", async (request, response) => {
+router.get("/:userId/testScores", async (request, response) => {
   try {
-    const testScores = await TestScore.find({});
+    const { userId } = request.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return response.status(404).send({ message: "User not found" });
+    }
+
     return response.status(200).json({
-      count: testScores.length,
-      data: testScores,
+      count: user.testScores.length,
+      data: user.testScores,
     });
   } catch (error) {
     console.log(error.message);
@@ -49,13 +61,18 @@ router.get("/", async (request, response) => {
 });
 
 // get one test score by id
-router.get("/:id", async (request, response) => {
+router.get("/:userId/testScores/:testScoreId", async (request, response) => {
   try {
-    const { id } = request.params;
-    const testScore = await TestScore.findById(id);
+    const { userId, testScoreId } = request.params;
 
+    const user = await User.findById(userId);
+    if (!user) {
+      return response.status(404).send({ message: "User not found" });
+    }
+
+    const testScore = user.testScores.id(testScoreId);
     if (!testScore) {
-      return response.status(404).send({ message: "TestScore not found" });
+      return response.status(404).send({ message: "Test score not found" });
     }
 
     return response.status(200).json(testScore);
@@ -66,20 +83,27 @@ router.get("/:id", async (request, response) => {
 });
 
 // update a test score
-router.put("/:id", async (request, response) => {
+router.put("/:userId/testScores/:testScoreId", async (request, response) => {
   try {
-    const { id } = request.params;
-    const updateData = request.body;
+    const { userId, testScoreId } = request.params;
 
-    const updatedTestScore = await TestScore.findByIdAndUpdate(id, updateData, {
-      new: true,
-    });
-
-    if (!updatedTestScore) {
-      return response.status(404).send({ message: "TestScore not found" });
+    const user = await User.findById(userId);
+    if (!user) {
+      return response.status(404).send({ message: "User not found" });
     }
 
-    return response.status(200).json(updatedTestScore);
+    const testScore = user.testScores.id(testScoreId);
+    if (!testScore) {
+      return response.status(404).send({ message: "Test score not found" });
+    }
+
+    testScore.testName = request.body.testName || testScore.testName;
+    testScore.score = request.body.score || testScore.score;
+    testScore.percentile = request.body.percentile || testScore.percentile;
+    testScore.dateTaken = request.body.dateTaken || testScore.dateTaken;
+
+    await user.save();
+    return response.status(200).json(testScore);
   } catch (error) {
     console.log(error.message);
     response.status(500).send({ message: error.message });
@@ -87,18 +111,24 @@ router.put("/:id", async (request, response) => {
 });
 
 // delete a test score
-router.delete("/:id", async (request, response) => {
+router.delete("/:userId/testScores/:testScoreId", async (request, response) => {
   try {
-    const { id } = request.params;
-    const deletedTestScore = await TestScore.findByIdAndDelete(id);
+    const { userId, testScoreId } = request.params;
 
-    if (!deletedTestScore) {
-      return response.status(404).send({ message: "TestScore not found" });
+    const user = await User.findById(userId);
+    if (!user) {
+      return response.status(404).send({ message: "User not found" });
     }
 
-    return response
-      .status(200)
-      .send({ message: "TestScore deleted successfully" });
+    const scoreIndex = user.testScores.findIndex(score => score.id === testScoreId);
+    if (scoreIndex === -1) {
+      return response.status(404).send({ message: "Test score not found" });
+    }
+
+    user.testScores.splice(scoreIndex, 1);
+    await user.save();
+
+    return response.status(200).send({ message: "Test score deleted successfully" });
   } catch (error) {
     console.log(error.message);
     response.status(500).send({ message: error.message });
