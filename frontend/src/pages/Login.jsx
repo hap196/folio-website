@@ -21,7 +21,7 @@ const Login = () => {
         console.log(data.error);
       } else {
         setData({});
-        navigate("/");
+        navigate("/dashboard");
       }
     } catch (error) {}
   };
