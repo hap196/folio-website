@@ -11,7 +11,7 @@ const Extracurricular = ({
 }) => {
   return (
     <div className="flex items-start space-x-4 py-4 text-start">
-      <img src={Logo} alt="Company Logo" className="h-12 w-12 mt-1" /> {/* Adjust margin-top as needed */}
+      <img src={Logo} alt="Company Logo" className="h-12 w-12 mt-1" />
       <div className="flex flex-col justify-start">
         <span className="text-lg font-semibold">{position}</span>
         <span className="text-sm text-gray-600">{name}</span>

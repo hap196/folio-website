@@ -1,15 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import ListItem from "./ListItem";
 import CourseModal from "./modals/CourseModal";
 import ExtracurricularModal from "./modals/ExtracurricularModal";
 import AwardModal from "./modals/AwardModal";
 import TestScoreModal from "./modals/TestScoreModal";
 import { FaPlus, FaPencilAlt } from "react-icons/fa";
+import Course from "./Course";
+import Extracurricular from "./Extracurricular";
+import Award from "./Award";
+import TestScore from "./TestScore";
 
 const PortfolioSection = ({ title, children, userId }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   // console.log("UserId in PortfolioSection:", userId);
+
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      let endpoint = title.toLowerCase().replace(/\s+/g, "");
+      // adjust endpoint if it's "test scores" (since we want camelcase)
+      if (title.toLowerCase() === "test scores") {
+        endpoint = "testScores";
+      }
+      try {
+        const response = await axios.get(`/${userId}/${endpoint}`);
+        setItems(response.data.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, [userId, title]);
 
   const handleModalSubmit = async (e) => {
     e.preventDefault();
@@ -18,9 +41,9 @@ const PortfolioSection = ({ title, children, userId }) => {
       const response = await axios.post(`/${userId}/courses`, courseData);
       if (response && response.data) {
         console.log("Course added successfully:", response.data);
-        onClose(); 
+        onClose();
       } else {
-        console.error("Unexpected response format:", response);
+        console.error("Unexpected response:", response);
       }
     } catch (error) {
       console.error(
@@ -29,7 +52,6 @@ const PortfolioSection = ({ title, children, userId }) => {
       );
     }
 
-    
     setCourseData({
       name: "",
       description: "",
@@ -38,13 +60,30 @@ const PortfolioSection = ({ title, children, userId }) => {
     });
   };
 
+  // determine the component to render based on the item type
+  const renderComponent = (item, type) => {
+    switch (type) {
+      case "courses":
+        return <Course {...item} />;
+      case "extracurriculars":
+        return <Extracurricular {...item} />;
+      case "awards":
+        return <Award {...item} />;
+      case "testScores":
+        return <TestScore {...item} />;
+      default:
+        return null;
+    }
+  };
+
+  // determine the component to render based on the item type
   const renderModal = () => {
     const sectionType = title.toLowerCase();
     switch (sectionType) {
       case "courses":
         return (
           <CourseModal
-            userId={userId} 
+            userId={userId}
             isVisible={isModalVisible}
             onClose={() => setIsModalVisible(false)}
             onSubmit={handleModalSubmit}
@@ -53,7 +92,7 @@ const PortfolioSection = ({ title, children, userId }) => {
       case "extracurriculars":
         return (
           <ExtracurricularModal
-            userId={userId} 
+            userId={userId}
             isVisible={isModalVisible}
             onClose={() => setIsModalVisible(false)}
             onSubmit={handleModalSubmit}
@@ -62,7 +101,7 @@ const PortfolioSection = ({ title, children, userId }) => {
       case "awards":
         return (
           <AwardModal
-            userId={userId} 
+            userId={userId}
             isVisible={isModalVisible}
             onClose={() => setIsModalVisible(false)}
             onSubmit={handleModalSubmit}
@@ -71,7 +110,7 @@ const PortfolioSection = ({ title, children, userId }) => {
       case "test scores":
         return (
           <TestScoreModal
-            userId={userId} 
+            userId={userId}
             isVisible={isModalVisible}
             onClose={() => setIsModalVisible(false)}
             onSubmit={handleModalSubmit}
@@ -81,7 +120,6 @@ const PortfolioSection = ({ title, children, userId }) => {
         return null;
     }
   };
-
   return (
     <div className="bg-gray-100 py-4 px-8 h-auto w-3/4 text-start my-2 rounded-lg">
       <div className="flex justify-between items-center">
@@ -102,8 +140,19 @@ const PortfolioSection = ({ title, children, userId }) => {
       {renderModal()}
 
       <ul>
-        {React.Children.map(children, (child) => {
-          return child.type === ListItem ? child : <ListItem>{child}</ListItem>;
+        {items.map((item, index) => {
+          // need to modify test scores to be camelcase
+          const itemType =
+            title.toLowerCase() === "test scores"
+              ? "testScores"
+              : title.toLowerCase().replace(/\s+/g, "");
+
+          // render the list of components
+          return (
+            <li key={item._id || index} className="py-2 border-b last:border-b-0 border-gray-300 text-start">
+              {renderComponent(item, itemType)}
+            </li>
+          );
         })}
       </ul>
     </div>
