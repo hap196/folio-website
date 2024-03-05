@@ -10,12 +10,12 @@ router.post("/:userId/testScores", async (request, response) => {
     if (
       !request.body.testName ||
       !request.body.score ||
-      !request.body.percentile ||
+      !request.body.grade ||
       !request.body.dateTaken
     ) {
       return response.status(400).send({
         message:
-          "Please provide all required fields: testName, score, percentile, dateTaken",
+          "Please provide all required fields: testName, score, grade, dateTaken",
       });
     }
 
