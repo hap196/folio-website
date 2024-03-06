@@ -1,7 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const ExtracurricularModal = ({ isVisible, onClose, userId }) => {
+const ExtracurricularModal = ({
+  isVisible,
+  onClose,
+  userId,
+  extracurricularData: initialExtracurricularData,
+  onSubmit,
+  isEditMode = false,
+}) => {
   const [extracurricularData, setExtracurricularData] = useState({
     name: "",
     position: "",
@@ -11,6 +18,21 @@ const ExtracurricularModal = ({ isVisible, onClose, userId }) => {
     endYear: "",
   });
 
+  useEffect(() => {
+    if (isEditMode && initialExtracurricularData) {
+      setExtracurricularData(initialExtracurricularData);
+    } else {
+      setExtracurricularData({
+        name: "",
+        position: "",
+        description: "",
+        location: "",
+        startYear: "",
+        endYear: "",
+      });
+    }
+  }, [isEditMode, initialExtracurricularData]);
+
   const handleInputChange = (e) => {
     setExtracurricularData({
       ...extracurricularData,
@@ -18,35 +40,9 @@ const ExtracurricularModal = ({ isVisible, onClose, userId }) => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    try {
-      const response = await axios.post(
-        `/${userId}/extracurriculars`,
-        extracurricularData
-      );
-      if (response && response.data) {
-        console.log("Extracurricular added successfully:", response.data);
-        onClose();
-      } else {
-        console.error("Unexpected response format:", response);
-      }
-    } catch (error) {
-      console.error(
-        "Error adding extracurricular:",
-        error.response ? error.response.data.message : error.message
-      );
-    }
-
-    setExtracurricularData({
-      name: "",
-      position: "",
-      description: "",
-      location: "",
-      startYear: "",
-      endYear: "",
-    });
+    onSubmit(extracurricularData);
   };
 
   if (!isVisible) return null;
@@ -60,7 +56,9 @@ const ExtracurricularModal = ({ isVisible, onClose, userId }) => {
         >
           &times;
         </button>
-        <h2 className="text-lg font-semibold mb-4">Add New Extracurricular</h2>
+        <h2 className="text-lg font-semibold mb-4">
+          {isEditMode ? "Edit Extracurricular" : "Add New Extracurricular"}
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block">Name:</label>
@@ -129,7 +127,7 @@ const ExtracurricularModal = ({ isVisible, onClose, userId }) => {
           </div>
           <div className="flex justify-end space-x-2">
             <button type="submit" className="btn submit-btn">
-              Submit
+              {isEditMode ? "Update" : "Submit"}
             </button>
             <button onClick={onClose} className="btn cancel-btn">
               Cancel

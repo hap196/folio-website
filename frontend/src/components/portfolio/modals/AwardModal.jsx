@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const AwardModal = ({ isVisible, onClose, userId }) => {
+const AwardModal = ({ isVisible, onClose, userId, awardData: initialAwardData, onSubmit, isEditMode = false }) => {
   const [awardData, setAwardData] = useState({
     title: "",
     description: "",
@@ -10,35 +10,33 @@ const AwardModal = ({ isVisible, onClose, userId }) => {
     dateReceived: "",
   });
 
+  useEffect(() => {
+    if (isEditMode && initialAwardData) {
+      setAwardData({
+        title: initialAwardData.title || "",
+        description: initialAwardData.description || "",
+        issuer: initialAwardData.issuer || "",
+        year: initialAwardData.year || "",
+        dateReceived: initialAwardData.dateReceived || "",
+      });
+    } else {
+      setAwardData({
+        title: "",
+        description: "",
+        issuer: "",
+        year: "",
+        dateReceived: "",
+      });
+    }
+  }, [isEditMode, initialAwardData]);
+
   const handleInputChange = (e) => {
     setAwardData({ ...awardData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    try {
-      const response = await axios.post(`/${userId}/awards`, awardData);
-      if (response && response.data) {
-        console.log("Award added successfully:", response.data);
-        onClose();
-      } else {
-        console.error("Unexpected response format:", response);
-      }
-    } catch (error) {
-      console.error(
-        "Error adding award:",
-        error.response ? error.response.data.message : error.message
-      );
-    }
-
-    setAwardData({
-      title: "",
-      description: "",
-      issuer: "",
-      year: "",
-      dateReceived: "",
-    });
+    onSubmit(awardData);
   };
 
   if (!isVisible) return null;
@@ -46,15 +44,12 @@ const AwardModal = ({ isVisible, onClose, userId }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-lg max-w-sm w-full mx-4 relative">
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-2xl text-black"
-        >
+        <button onClick={onClose} className="absolute top-2 right-2 text-2xl text-black">
           &times;
         </button>
-        <h2 className="text-lg font-semibold mb-4">Add New Award</h2>
+        <h2 className="text-lg font-semibold mb-4">{isEditMode ? 'Edit Award' : 'Add New Award'}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+              <div>
             <label className="block">Title:</label>
             <input
               type="text"
@@ -110,7 +105,10 @@ const AwardModal = ({ isVisible, onClose, userId }) => {
           </div>
           <div className="flex justify-end space-x-2">
             <button type="submit" className="btn submit-btn">
-              Submit
+              {isEditMode ? 'Update' : 'Submit'}
+            </button>
+            <button onClick={onClose} className="btn cancel-btn">
+              Cancel
             </button>
           </div>
         </form>

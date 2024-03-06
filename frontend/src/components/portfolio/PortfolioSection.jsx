@@ -13,7 +13,7 @@ import TestScore from "./TestScore";
 
 const PortfolioSection = ({ title, userId, isEditMode = false }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingCourse, setEditingCourse] = useState(null);
+  const [editingItem, setEditingItem] = useState(null);
   const [items, setItems] = useState([]);
   const navigate = useNavigate();
 
@@ -25,7 +25,7 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
   // when the main edit button is clicked
   const handleEditItem = (item) => {
     // puts us in edit mode
-    setEditingCourse(item);
+    setEditingItem(item);
     // show the modal
     setIsModalVisible(true);
   };
@@ -48,37 +48,34 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
     fetchData();
   }, [userId, title, fetchData]);
 
-  const handleModalSubmit = async (courseData) => {
+  // handles submitting modal (edit or create item)
+  const handleModalSubmit = async (itemData, type) => {
     let response;
+    let endpoint = `${userId}/${type}`; // Construct the endpoint dynamically based on the type
+    let itemId = editingItem?._id;
 
     try {
-      if (editingCourse) {
-        // editing an existing course
-        response = await axios.put(
-          `/${userId}/courses/${editingCourse._id}`,
-          courseData
-        );
+      if (editingItem) {
+        response = await axios.put(`/${endpoint}/${itemId}`, itemData);
       } else {
-        // adding a new course
-        response = await axios.post(`/${userId}/courses`, courseData);
+        response = await axios.post(`/${endpoint}`, itemData);
       }
 
       if (response && response.data) {
         console.log(
-          `${editingCourse ? "Course updated" : "Course added"} successfully:`,
+          `${type} ${editingItem ? "updated" : "added"} successfully:`,
           response.data
         );
         setIsModalVisible(false);
-        setEditingCourse(null);
-        // refresh the list after editing
+        setEditingItem(null);
         fetchData();
       } else {
         console.error("Unexpected response format:", response);
       }
     } catch (error) {
       console.error(
-        `Error ${editingCourse ? "updating" : "adding"} course:`,
-        error.response ? error.response.data.message : error.message
+        `Error ${editingItem ? "updating" : "adding"} ${type}:`,
+        error
       );
     }
   };
@@ -92,12 +89,28 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
     switch (type) {
       case "courses":
         return (
-          <Course course={item} isEditMode={isEditMode} onEdit={handleEditItem} />
+          <Course
+            course={item}
+            isEditMode={isEditMode}
+            onEdit={handleEditItem}
+          />
         );
       case "extracurriculars":
-        return <Extracurricular {...item} {...commonProps} />;
+        return (
+          <Extracurricular
+            extracurricular={item}
+            isEditMode={isEditMode}
+            onEdit={handleEditItem}
+          />
+        );
       case "awards":
-        return <Award {...item} {...commonProps} />;
+        return (
+          <Award
+            award={item}
+            isEditMode={isEditMode}
+            onEdit={handleEditItem}
+          />
+        );
       case "testScores":
         return <TestScore {...item} {...commonProps} />;
       default:
@@ -115,12 +128,12 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
             isVisible={isModalVisible}
             onClose={() => {
               setIsModalVisible(false);
-              setEditingCourse(null);
+              setEditingItem(null);
             }}
             // pass the editing course data to the modal
-            courseData={editingCourse}
-            onSubmit={handleModalSubmit}
-            isEditMode={!!editingCourse}
+            courseData={editingItem}
+            onSubmit={(data) => handleModalSubmit(data, "courses")}
+            isEditMode={!!editingItem}
           />
         );
       case "extracurriculars":
@@ -132,7 +145,9 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
               setIsModalVisible(false);
               fetchData();
             }}
-            onSubmit={handleModalSubmit}
+            extracurricularData={editingItem}
+            onSubmit={(data) => handleModalSubmit(data, "extracurriculars")}
+            isEditMode={!!editingItem}
           />
         );
       case "awards":
@@ -144,7 +159,9 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
               setIsModalVisible(false);
               fetchData();
             }}
-            onSubmit={handleModalSubmit}
+            awardData={editingItem}
+            onSubmit={(data) => handleModalSubmit(data, "awards")}
+            isEditMode={!!editingItem}
           />
         );
       case "test scores":
@@ -156,7 +173,7 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
               setIsModalVisible(false);
               fetchData();
             }}
-            onSubmit={handleModalSubmit}
+            onSubmit={(data) => handleModalSubmit(data, "testScores")}
           />
         );
       default:
