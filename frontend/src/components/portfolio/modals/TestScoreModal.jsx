@@ -1,49 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const TestScoreModal = ({ isVisible, onClose, userId }) => {
+const TestScoreModal = ({
+  isVisible,
+  onClose,
+  userId,
+  testScoreData: initialTestScoreData,
+  onSubmit,
+  isEditMode = false,
+}) => {
   const [testScoreData, setTestScoreData] = useState({
     testName: "",
-    score: "", 
-    grade: "", 
+    score: "",
+    grade: "",
     dateTaken: "",
   });
 
+  useEffect(() => {
+    if (isEditMode && initialTestScoreData) {
+      setTestScoreData({
+        testName: initialTestScoreData.testName || "",
+        score: initialTestScoreData.score || "",
+        grade: initialTestScoreData.grade || "",
+        dateTaken: initialTestScoreData.dateTaken || "",
+      });
+    } else {
+      setTestScoreData({
+        testName: "",
+        score: "",
+        grade: "",
+        dateTaken: "",
+      });
+    }
+  }, [isEditMode, initialTestScoreData]);
+
   const handleInputChange = (e) => {
-    const { name, value, type } = e.target;
-    setTestScoreData({
-      ...testScoreData,
-      [name]: type === "number" ? Number(value) : value,
-    });
+    setTestScoreData({ ...testScoreData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    try {
-      const response = await axios.post(
-        `/${userId}/testscores`,
-        testScoreData
-      );
-      if (response && response.data) {
-        console.log("Test score added successfully:", response.data);
-        onClose();
-      } else {
-        console.error("Unexpected response format:", response);
-      }
-    } catch (error) {
-      console.error(
-        "Error adding test score:",
-        error.response ? error.response.data.message : error.message
-      );
-    }
-
-    setTestScoreData({
-      testName: "",
-      score: "",
-      grade: "",
-      dateTaken: "",
-    });
+    onSubmit(testScoreData);
   };
 
   if (!isVisible) return null;
@@ -57,7 +54,9 @@ const TestScoreModal = ({ isVisible, onClose, userId }) => {
         >
           &times;
         </button>
-        <h2 className="text-lg font-semibold mb-4">Add New Test Score</h2>
+        <h2 className="text-lg font-semibold mb-4">
+          {isEditMode ? "Edit Test Score" : "Add New Test Score"}
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block">Test Name:</label>

@@ -112,7 +112,9 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
           />
         );
       case "testScores":
-        return <TestScore {...item} {...commonProps} />;
+        return <TestScore testScore={item}
+        isEditMode={isEditMode}
+        onEdit={handleEditItem} />;
       default:
         return null;
     }
@@ -173,7 +175,9 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
               setIsModalVisible(false);
               fetchData();
             }}
+            testScoreData={editingItem}
             onSubmit={(data) => handleModalSubmit(data, "testScores")}
+            isEditMode={!!editingItem}
           />
         );
       default:
