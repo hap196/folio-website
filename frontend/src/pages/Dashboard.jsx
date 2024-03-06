@@ -15,16 +15,16 @@ const Dashboard = () => {
       <div className="flex flex-row">
         <div className="flex flex-col items-center justify-center w-2/3 py-4 ml-16">
           {!!user && (
-            <PortfolioSection title="Courses" userId={user.id} />
+            <PortfolioSection title="Courses" userId={user.id} isEditMode={false}/>
           )}
           {!!user && (
-            <PortfolioSection title="Extracurriculars" userId={user.id} />
+            <PortfolioSection title="Extracurriculars" userId={user.id} isEditMode={false}/>
           )}
           {!!user && (
-            <PortfolioSection title="Awards" userId={user.id} />
+            <PortfolioSection title="Awards" userId={user.id} isEditMode={false}/>
           )}
           {!!user && (
-            <PortfolioSection title="Test Scores" userId={user.id} />
+            <PortfolioSection title="Test Scores" userId={user.id} isEditMode={false}/>
           )}
         </div>
         <div className="flex items-center justify-left w-1/3 h-full mr-14 py-4">

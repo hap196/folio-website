@@ -11,6 +11,7 @@ router.post("/:userId/courses", async (request, response) => {
     const { name, description, grade, year } = request.body;
 
     if (!name || !description || !grade || !year) {
+      console.log("request", request.body)
       return response.status(400).send({
         message:
           "Please provide all required fields: name, description, grade, year",

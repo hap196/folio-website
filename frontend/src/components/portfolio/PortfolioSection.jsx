@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import CourseModal from "./modals/CourseModal";
 import ExtracurricularModal from "./modals/ExtracurricularModal";
@@ -10,11 +11,24 @@ import Extracurricular from "./Extracurricular";
 import Award from "./Award";
 import TestScore from "./TestScore";
 
-const PortfolioSection = ({ title, children, userId }) => {
+const PortfolioSection = ({ title, userId, isEditMode = false }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  // console.log("UserId in PortfolioSection:", userId);
-
+  const [editingCourse, setEditingCourse] = useState(null);
   const [items, setItems] = useState([]);
+  const navigate = useNavigate();
+
+  const handleEditClick = () => {
+    const sectionPath = title.toLowerCase().replace(/\s+/g, "-");
+    navigate(`/edit/${sectionPath}`);
+  };
+
+  // when the main edit button is clicked
+  const handleEditItem = (item) => {
+    // puts us in edit mode
+    setEditingCourse(item);
+    // show the modal
+    setIsModalVisible(true);
+  };
 
   const fetchData = useCallback(async () => {
     let endpoint = title.toLowerCase().replace(/\s+/g, "");
@@ -29,46 +43,67 @@ const PortfolioSection = ({ title, children, userId }) => {
       console.error("Error fetching data:", error);
     }
   });
-  
-  useEffect(() => {
 
+  useEffect(() => {
     fetchData();
   }, [userId, title, fetchData]);
 
-  const handleModalSubmit = async (courseData, endpoint) => {
+  const handleModalSubmit = async (courseData) => {
+    let response;
+
     try {
-      const response = await axios.post(`/${userId}/${endpoint}`, courseData);
+      if (editingCourse) {
+        // editing an existing course
+        response = await axios.put(
+          `/${userId}/courses/${editingCourse._id}`,
+          courseData
+        );
+      } else {
+        // adding a new course
+        response = await axios.post(`/${userId}/courses`, courseData);
+      }
+
       if (response && response.data) {
-        console.log(`${endpoint} added successfully:`, response.data);
+        console.log(
+          `${editingCourse ? "Course updated" : "Course added"} successfully:`,
+          response.data
+        );
         setIsModalVisible(false);
-        fetchData(); // Call fetchData to refresh items after successful submission
+        setEditingCourse(null);
+        // refresh the list after editing
+        fetchData();
       } else {
         console.error("Unexpected response format:", response);
       }
     } catch (error) {
       console.error(
-        `Error adding ${endpoint}:`,
+        `Error ${editingCourse ? "updating" : "adding"} course:`,
         error.response ? error.response.data.message : error.message
       );
     }
   };
 
   // determine the component to render based on the item type
-  const renderComponent = (item, type) => {
+  const renderComponent = (item, type, isEditMode) => {
+    const commonProps = {
+      isEditMode,
+      onEdit: () => handleEditItem(item),
+    };
     switch (type) {
       case "courses":
-        return <Course {...item} />;
+        return (
+          <Course course={item} isEditMode={isEditMode} onEdit={handleEditItem} />
+        );
       case "extracurriculars":
-        return <Extracurricular {...item} />;
+        return <Extracurricular {...item} {...commonProps} />;
       case "awards":
-        return <Award {...item} />;
+        return <Award {...item} {...commonProps} />;
       case "testScores":
-        return <TestScore {...item} />;
+        return <TestScore {...item} {...commonProps} />;
       default:
         return null;
     }
   };
-
   // determine the component to render based on the item type
   const renderModal = () => {
     const sectionType = title.toLowerCase();
@@ -80,9 +115,12 @@ const PortfolioSection = ({ title, children, userId }) => {
             isVisible={isModalVisible}
             onClose={() => {
               setIsModalVisible(false);
-              fetchData();
+              setEditingCourse(null);
             }}
+            // pass the editing course data to the modal
+            courseData={editingCourse}
             onSubmit={handleModalSubmit}
+            isEditMode={!!editingCourse}
           />
         );
       case "extracurriculars":
@@ -136,9 +174,14 @@ const PortfolioSection = ({ title, children, userId }) => {
           >
             <FaPlus />
           </button>
-          <button className="p-2 text-gray-500 hover:text-gray-800">
-            <FaPencilAlt />
-          </button>
+          {!isEditMode && (
+            <button
+              onClick={handleEditClick}
+              className="p-2 text-gray-500 hover:text-gray-800"
+            >
+              <FaPencilAlt />
+            </button>
+          )}
         </div>
       </div>
 
@@ -146,19 +189,16 @@ const PortfolioSection = ({ title, children, userId }) => {
 
       <ul>
         {items.map((item, index) => {
-          // need to modify test scores to be camelcase
           const itemType =
             title.toLowerCase() === "test scores"
               ? "testScores"
               : title.toLowerCase().replace(/\s+/g, "");
-
-          // render the list of components
           return (
             <li
               key={item._id || index}
-              className="py-2 border-b last:border-b-0 border-gray-300 text-start"
+              className="flex justify-between items-center py-2 border-b last:border-b-0 border-gray-300"
             >
-              {renderComponent(item, itemType)}
+              {renderComponent(item, itemType, isEditMode, handleEditItem)}
             </li>
           );
         })}
