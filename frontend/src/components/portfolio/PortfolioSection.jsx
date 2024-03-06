@@ -51,7 +51,7 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
   // handles submitting modal (edit or create item)
   const handleModalSubmit = async (itemData, type) => {
     let response;
-    let endpoint = `${userId}/${type}`; // Construct the endpoint dynamically based on the type
+    let endpoint = `${userId}/${type}`;
     let itemId = editingItem?._id;
 
     try {
@@ -80,6 +80,17 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
     }
   };
 
+  // deleting items
+  const handleDeleteItem = async (itemId, itemType) => {
+    try {
+      await axios.delete(`/${userId}/${itemType}/${itemId}`);
+      console.log(`${itemType} deleted successfully`);
+      fetchData();
+    } catch (error) {
+      console.error(`Error deleting ${itemType}:`, error);
+    }
+  };
+
   // determine the component to render based on the item type
   const renderComponent = (item, type, isEditMode) => {
     const commonProps = {
@@ -105,16 +116,16 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
         );
       case "awards":
         return (
-          <Award
-            award={item}
+          <Award award={item} isEditMode={isEditMode} onEdit={handleEditItem} />
+        );
+      case "testScores":
+        return (
+          <TestScore
+            testScore={item}
             isEditMode={isEditMode}
             onEdit={handleEditItem}
           />
         );
-      case "testScores":
-        return <TestScore testScore={item}
-        isEditMode={isEditMode}
-        onEdit={handleEditItem} />;
       default:
         return null;
     }
@@ -136,6 +147,7 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
             courseData={editingItem}
             onSubmit={(data) => handleModalSubmit(data, "courses")}
             isEditMode={!!editingItem}
+            onDelete={handleDeleteItem}
           />
         );
       case "extracurriculars":
@@ -150,6 +162,7 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
             extracurricularData={editingItem}
             onSubmit={(data) => handleModalSubmit(data, "extracurriculars")}
             isEditMode={!!editingItem}
+            onDelete={handleDeleteItem}
           />
         );
       case "awards":
@@ -164,6 +177,7 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
             awardData={editingItem}
             onSubmit={(data) => handleModalSubmit(data, "awards")}
             isEditMode={!!editingItem}
+            onDelete={handleDeleteItem}
           />
         );
       case "test scores":
@@ -178,6 +192,7 @@ const PortfolioSection = ({ title, userId, isEditMode = false }) => {
             testScoreData={editingItem}
             onSubmit={(data) => handleModalSubmit(data, "testScores")}
             isEditMode={!!editingItem}
+            onDelete={handleDeleteItem}
           />
         );
       default:

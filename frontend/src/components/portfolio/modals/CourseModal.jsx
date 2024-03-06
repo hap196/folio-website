@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const CourseModal = ({ isVisible, onClose, userId, courseData: initialCourseData, onSubmit, isEditMode = false }) => {
+const CourseModal = ({
+  isVisible,
+  onClose,
+  userId,
+  courseData: initialCourseData,
+  onSubmit,
+  onDelete,
+  isEditMode = false,
+}) => {
   const [courseData, setCourseData] = useState({
     name: "",
     description: "",
@@ -31,38 +39,83 @@ const CourseModal = ({ isVisible, onClose, userId, courseData: initialCourseData
     onSubmit(courseData);
   };
 
+  const handleDeleteClick = () => {
+    if (initialCourseData && initialCourseData._id) {
+      onDelete(initialCourseData._id, "courses");
+    }
+    onClose();
+  };
+
   if (!isVisible) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-lg max-w-sm w-full mx-4 relative">
-        <button onClick={onClose} className="absolute top-2 right-2 text-2xl text-black">
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-2xl text-black"
+        >
           &times;
         </button>
-        <h2 className="text-lg font-semibold mb-4">{isEditMode ? 'Edit Course' : 'Add New Course'}</h2>
+        <h2 className="text-lg font-semibold mb-4">
+          {isEditMode ? "Edit Course" : "Add New Course"}
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block">Name:</label>
-            <input type="text" name="name" className="input" value={courseData.name} onChange={handleInputChange} required />
+            <input
+              type="text"
+              name="name"
+              className="input"
+              value={courseData.name}
+              onChange={handleInputChange}
+              required
+            />
           </div>
           <div>
             <label className="block">Description:</label>
-            <textarea name="description" className="textarea" value={courseData.description} onChange={handleInputChange} required />
+            <textarea
+              name="description"
+              className="textarea"
+              value={courseData.description}
+              onChange={handleInputChange}
+              required
+            />
           </div>
           <div>
             <label className="block">Grade:</label>
-            <input type="text" name="grade" className="input" value={courseData.grade} onChange={handleInputChange} required />
+            <input
+              type="text"
+              name="grade"
+              className="input"
+              value={courseData.grade}
+              onChange={handleInputChange}
+              required
+            />
           </div>
           <div>
             <label className="block">Year:</label>
-            <input type="number" name="year" className="input" value={courseData.year} onChange={handleInputChange} required />
+            <input
+              type="number"
+              name="year"
+              className="input"
+              value={courseData.year}
+              onChange={handleInputChange}
+              required
+            />
           </div>
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-between space-x-2">
+            {isEditMode && (
+              <button
+                type="button"
+                onClick={handleDeleteClick}
+                className="btn delete-btn"
+              >
+                Delete
+              </button>
+            )}
             <button type="submit" className="btn submit-btn">
-              {isEditMode ? 'Update' : 'Submit'}
-            </button>
-            <button onClick={onClose} className="btn cancel-btn">
-              Cancel
+              {isEditMode ? "Update" : "Submit"}
             </button>
           </div>
         </form>

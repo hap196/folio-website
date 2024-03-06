@@ -7,6 +7,7 @@ const ExtracurricularModal = ({
   userId,
   extracurricularData: initialExtracurricularData,
   onSubmit,
+  onDelete,
   isEditMode = false,
 }) => {
   const [extracurricularData, setExtracurricularData] = useState({
@@ -43,6 +44,13 @@ const ExtracurricularModal = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(extracurricularData);
+  };
+
+  const handleDeleteClick = () => {
+    if (initialExtracurricularData && initialExtracurricularData._id) {
+      onDelete(initialExtracurricularData._id, "extracurriculars");
+    }
+    onClose();
   };
 
   if (!isVisible) return null;
@@ -125,12 +133,18 @@ const ExtracurricularModal = ({
               className="input"
             />
           </div>
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-between space-x-2">
+            {isEditMode && (
+              <button
+                type="button"
+                onClick={handleDeleteClick}
+                className="btn delete-btn"
+              >
+                Delete
+              </button>
+            )}
             <button type="submit" className="btn submit-btn">
               {isEditMode ? "Update" : "Submit"}
-            </button>
-            <button onClick={onClose} className="btn cancel-btn">
-              Cancel
             </button>
           </div>
         </form>

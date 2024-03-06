@@ -7,6 +7,7 @@ const TestScoreModal = ({
   userId,
   testScoreData: initialTestScoreData,
   onSubmit,
+  onDelete,
   isEditMode = false,
 }) => {
   const [testScoreData, setTestScoreData] = useState({
@@ -41,6 +42,13 @@ const TestScoreModal = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     onSubmit(testScoreData);
+  };
+
+  const handleDeleteClick = () => {
+    if (initialTestScoreData && initialTestScoreData._id) {
+      onDelete(initialTestScoreData._id, "testScores");
+    }
+    onClose();
   };
 
   if (!isVisible) return null;
@@ -102,9 +110,18 @@ const TestScoreModal = ({
               required
             />
           </div>
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-between space-x-2">
+            {isEditMode && (
+              <button
+                type="button"
+                onClick={handleDeleteClick}
+                className="btn delete-btn"
+              >
+                Delete
+              </button>
+            )}
             <button type="submit" className="btn submit-btn">
-              Submit
+              {isEditMode ? "Update" : "Submit"}
             </button>
           </div>
         </form>
