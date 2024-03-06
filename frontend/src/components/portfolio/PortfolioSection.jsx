@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import CourseModal from "./modals/CourseModal";
 import ExtracurricularModal from "./modals/ExtracurricularModal";
@@ -16,48 +16,41 @@ const PortfolioSection = ({ title, children, userId }) => {
 
   const [items, setItems] = useState([]);
 
+  const fetchData = useCallback(async () => {
+    let endpoint = title.toLowerCase().replace(/\s+/g, "");
+    // adjust endpoint if it's "test scores" (since we want camelcase)
+    if (title.toLowerCase() === "test scores") {
+      endpoint = "testScores";
+    }
+    try {
+      const response = await axios.get(`/${userId}/${endpoint}`);
+      setItems(response.data.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  });
+  
   useEffect(() => {
-    const fetchData = async () => {
-      let endpoint = title.toLowerCase().replace(/\s+/g, "");
-      // adjust endpoint if it's "test scores" (since we want camelcase)
-      if (title.toLowerCase() === "test scores") {
-        endpoint = "testScores";
-      }
-      try {
-        const response = await axios.get(`/${userId}/${endpoint}`);
-        setItems(response.data.data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
 
     fetchData();
-  }, [userId, title]);
+  }, [userId, title, fetchData]);
 
-  const handleModalSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleModalSubmit = async (courseData, endpoint) => {
     try {
-      const response = await axios.post(`/${userId}/courses`, courseData);
+      const response = await axios.post(`/${userId}/${endpoint}`, courseData);
       if (response && response.data) {
-        console.log("Course added successfully:", response.data);
-        onClose();
+        console.log(`${endpoint} added successfully:`, response.data);
+        setIsModalVisible(false);
+        fetchData(); // Call fetchData to refresh items after successful submission
       } else {
-        console.error("Unexpected response:", response);
+        console.error("Unexpected response format:", response);
       }
     } catch (error) {
       console.error(
-        "Error adding course:",
+        `Error adding ${endpoint}:`,
         error.response ? error.response.data.message : error.message
       );
     }
-
-    setCourseData({
-      name: "",
-      description: "",
-      grade: "",
-      year: "",
-    });
   };
 
   // determine the component to render based on the item type
@@ -85,7 +78,10 @@ const PortfolioSection = ({ title, children, userId }) => {
           <CourseModal
             userId={userId}
             isVisible={isModalVisible}
-            onClose={() => setIsModalVisible(false)}
+            onClose={() => {
+              setIsModalVisible(false);
+              fetchData();
+            }}
             onSubmit={handleModalSubmit}
           />
         );
@@ -94,7 +90,10 @@ const PortfolioSection = ({ title, children, userId }) => {
           <ExtracurricularModal
             userId={userId}
             isVisible={isModalVisible}
-            onClose={() => setIsModalVisible(false)}
+            onClose={() => {
+              setIsModalVisible(false);
+              fetchData();
+            }}
             onSubmit={handleModalSubmit}
           />
         );
@@ -103,7 +102,10 @@ const PortfolioSection = ({ title, children, userId }) => {
           <AwardModal
             userId={userId}
             isVisible={isModalVisible}
-            onClose={() => setIsModalVisible(false)}
+            onClose={() => {
+              setIsModalVisible(false);
+              fetchData();
+            }}
             onSubmit={handleModalSubmit}
           />
         );
@@ -112,7 +114,10 @@ const PortfolioSection = ({ title, children, userId }) => {
           <TestScoreModal
             userId={userId}
             isVisible={isModalVisible}
-            onClose={() => setIsModalVisible(false)}
+            onClose={() => {
+              setIsModalVisible(false);
+              fetchData();
+            }}
             onSubmit={handleModalSubmit}
           />
         );
@@ -149,7 +154,10 @@ const PortfolioSection = ({ title, children, userId }) => {
 
           // render the list of components
           return (
-            <li key={item._id || index} className="py-2 border-b last:border-b-0 border-gray-300 text-start">
+            <li
+              key={item._id || index}
+              className="py-2 border-b last:border-b-0 border-gray-300 text-start"
+            >
               {renderComponent(item, itemType)}
             </li>
           );
