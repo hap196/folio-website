@@ -9,6 +9,7 @@ import { Toaster } from "react-hot-toast";
 import { UserContextProvider } from "../context/userContext";
 import Dashboard from "./pages/Dashboard";
 import EditSection from "./pages/EditSection";
+import Chat from "./pages/Chat";
 
 axios.defaults.baseURL = "http://localhost:8000";
 axios.defaults.withCredentials = true;
@@ -23,6 +24,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/edit/:section" element={<EditSection />} />
+          <Route path="/chat" element={<Chat />} />
         </Routes>
       </UserContextProvider>
   );

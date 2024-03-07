@@ -23,13 +23,13 @@ const Navbar = () => {
           Portfolio
         </Link>
         <Link
-          to="/register"
+          to="/chat"
           className="text-lg px-3 py-1 hover:bg-gray-100 rounded"
         >
           Chat
         </Link>
         <Link
-          to="/login"
+          to="/chat"
           className="text-lg px-3 py-1 hover:bg-gray-100 rounded"
         >
           Ventures
